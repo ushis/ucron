@@ -1,4 +1,4 @@
 # min   hour  dom   month  dow   command
 0-58/2  *     *     *      *     echo even minutes
 1-59/2  *     *     *      *     echo odd minutes to stderr 1>&2
-*       *     *     *      *     sleep 30 && echo "finally :)"
+*       *     *     *      *     sleep 30 && echo "30 seconds of hard work"

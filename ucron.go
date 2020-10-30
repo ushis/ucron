@@ -33,7 +33,6 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-
 	c := cron.New()
 
 	for _, entry := range entries {
@@ -48,7 +47,7 @@ func main() {
 	signal.Notify(sigc, syscall.SIGINT, syscall.SIGTERM)
 	<-sigc
 
-	fmt.Println("ucron: shutdown: waiting for jobs to complete...")
+	fmt.Println("> shutdown. waiting for jobs to complete...")
 	<-c.Stop().Done()
 }
 
@@ -66,45 +65,50 @@ func readCrontab(r io.Reader) ([][2]string, error) {
 	for {
 		line, err := b.ReadString('\n')
 
-		if err == io.EOF {
+		if err != nil && err != io.EOF {
+			return nil, err
+		}
+		if line == "" && err == io.EOF {
 			return entries, nil
 		}
-		if err != nil {
-			return nil, err
-		}
-		if strings.HasPrefix(line, "#") {
+		line = strings.TrimSpace(line)
+
+		if line == "" || strings.HasPrefix(line, "#") {
 			continue
 		}
-		entry, err := parseEntry(line)
+		fields := fieldsN(line, 6)
 
-		if err != nil {
-			return nil, err
+		if len(fields) != 6 {
+			return nil, fmt.Errorf("invalid crontab entry: %s", line)
 		}
-		entries = append(entries, entry)
+		entries = append(entries, [2]string{
+			strings.Join(fields[0:5], " "),
+			fields[5],
+		})
 	}
 }
 
-func parseEntry(entry string) ([2]string, error) {
-	for count, i := 0, 0; ; {
-		j := strings.IndexFunc(entry[i:], func(r rune) bool {
+func fieldsN(s string, n int) []string {
+	fields := []string{}
+	i := 0
+
+	for ; n != 1; n-- {
+		j := strings.IndexFunc(s[i:], func(r rune) bool {
 			return !unicode.IsSpace(r)
 		})
 
 		if j < 0 {
-			return [2]string{}, fmt.Errorf("invalid crontab entry: %s", entry)
+			return fields
 		}
-		k := strings.IndexFunc(entry[i+j:], unicode.IsSpace)
+		k := strings.IndexFunc(s[i+j:], unicode.IsSpace)
 
 		if k < 0 {
-			return [2]string{}, fmt.Errorf("invalid crontab entry: %s", entry)
+			return append(fields, s[i+j:])
 		}
+		fields = append(fields, s[i+j:i+j+k])
 		i += j + k
-
-		if count == 4 {
-			return [2]string{strings.TrimSpace(entry[:i]), strings.TrimSpace(entry[i:])}, nil
-		}
-		count++
 	}
+	return append(fields, strings.TrimSpace(s[i:]))
 }
 
 type job struct {
@@ -116,7 +120,7 @@ func newJob(command string) *job {
 }
 
 func (j *job) Run() {
-	fmt.Printf("ucron: /bin/sh -c \"%s\"\n", j.command)
+	fmt.Printf("> /bin/sh -c \"%s\"\n", j.command)
 	cmd := exec.Command("/bin/sh", "-c", j.command)
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true, Pgid: 0}
 	cmd.Stdout = os.Stdout
