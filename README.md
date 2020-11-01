@@ -6,6 +6,15 @@ A cron implementation meant to be executed by unprivileged users. The project ai
 
 ## Install
 
+Download the build.
+
+```shell
+$ curl -o https://github.com/ushis/ucron/releases/<version>/ucron
+$ chmod +x ucron
+```
+
+Or install it via `go get`.
+
 ```shell
 $ go get github.com/ushis/ucron
 ```
