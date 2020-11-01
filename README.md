@@ -6,10 +6,19 @@ A cron implementation meant to be executed by unprivileged users. The project ai
 
 ## Install
 
-Download the build.
+Download a build from the [Releases](https://github.com/ushis/ucron/releases) page.
 
 ```shell
-$ curl -o https://github.com/ushis/ucron/releases/<version>/ucron
+$ curl -LO https://github.com/ushis/ucron/releases/download/<version>/ucron
+$ chmod +x ucron
+```
+
+Download the build from the latest release.
+
+```shell
+$ curl https://api.github.com/repos/ushis/ucron/releases/latest |
+  jq '.assets | map(select(.name == "ucron")) | first | .browser_download_url' |
+  xargs curl -LO
 $ chmod +x ucron
 ```
 
@@ -23,8 +32,6 @@ $ go get github.com/ushis/ucron
 
 ```shell
 $ ucron path/to/crontab
-> /bin/sh -c "echo my first job"
-my first job
 ```
 
 ## Features / Design
