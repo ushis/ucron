@@ -22,6 +22,7 @@ jobs:
         run: |
           go vet *.go
           go get -v -d .
+          go test -v -cover -race .
           go build -v -a .
       - name: upload build
         uses: actions/upload-artifact@v2
